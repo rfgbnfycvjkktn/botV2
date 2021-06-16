@@ -1,4 +1,4 @@
 .env
 .idea
 .handler-saves
-.db
+tbot.db
