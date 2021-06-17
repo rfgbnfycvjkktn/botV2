@@ -18,11 +18,8 @@ TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
 # платежи
-provider_token = '390540012:LIVE:17630'  # Нужно будет скрыть
+provider_token = os.getenv("TELEGRAM_PROVIDER_TOKEN")
 prices = [LabeledPrice(label='Подписка', amount=30000)]
-shipping_options = [
-    ShippingOption(id='instant', title='WorldWide Teleporter').add_price(LabeledPrice('Teleporter', 1000)),
-    ShippingOption(id='pickup', title='Local pickup').add_price(LabeledPrice('Pickup', 300))]
 
 param = {'yieldless': 0, 'yieldmore': 0, 'priceless': 0, 'pricemore': 0, 'durationless': 0, 'durationmore': 0,
          'volume': 0}  # параметры запроса
@@ -36,10 +33,15 @@ def start_command(message):
                'help': u'\U00002139' + ' Помощь'}
     InlineKeyboard.callback_keyboard(message, buttons, messages.start_menu())
 
-    users.init_db()
-
     user = users.User()
-    data = (message.from_user.id, message.from_user.first_name, None, 0, datetime.date.today(), None, None)
+    data = {'id': message.from_user.id,
+            'name': message.from_user.first_name,
+            'username': message.from_user.username,
+            'email': "",
+            'access': False,
+            'reg_date': datetime.datetime.today().replace(microsecond=0),
+            'sub_start_date': None,
+            'sub_end_date': None}
     user.add(data)
 
 
@@ -51,10 +53,15 @@ def callback_inline(call):
                'help': u'\U00002139' + ' Помощь'}
     InlineKeyboard.callback_keyboard(call.message, buttons, messages.start_menu())
 
-    users.init_db()
-
     user = users.User()
-    data = (call.message.from_user.id, call.message.from_user.first_name, None, 0, datetime.date.today(), None, None)
+    data = {'id': call.from_user.id,
+            'name': call.from_user.first_name,
+            'username': call.from_user.username,
+            'email': "",
+            'access': False,
+            'reg_date': datetime.datetime.today().replace(microsecond=0),
+            'sub_start_date': None,
+            'sub_end_date': None}
     user.add(data)
 
 
@@ -81,11 +88,11 @@ def start_command(call):
     status = user.check_sub(data)
     if status["status_sub"]:
         buttons = {'start': u'\U00002B05' + ' На главную'}
-        date_obj = datetime.datetime.strptime(status["sub_end"], '%Y-%m-%d')
+        # date_obj = datetime.datetime.strptime(status["sub_end"], '%Y-%m-%d')
 
         # InlineKeyboard.callback_keyboard(call, buttons, "Подписка активна до: " + date_obj.strftime("%d") + "." + date_obj.strftime("%m") + "." + date_obj.strftime("%Y"))
         InlineKeyboard.callback_keyboard(call, buttons,
-                                         "Подписка активна до: " + date_obj.strftime("%d.%m.%Y"))
+                                         "Подписка активна до: " + status['sub_end'].strftime("%d.%m.%Y"))
     else:
         buttons = {'start': u'\U00002B05' + ' На главную'}
         InlineKeyboard.callback_keyboard(call, buttons, "Подписка не активирована!")
@@ -128,14 +135,27 @@ def callback_inline(message):
 @bot.message_handler(commands=["buy"])
 def start_command(call):
     bot.clear_step_handler(call)
-    # bot.send_message(call.chat.id,
-    #                  "На данный момент платежи в тестовом режиме."
-    #                  " Для оплаты используйте данные тестовой карты:"
-    #                  "\n 1111 1111 1111 1026, 12/22, CVC 000"
-    #                  "\n\nОплачиваемый товар:", parse_mode='Markdown')
 
     bot.send_invoice(call.chat.id, title='Подписка (30 дней)',
-                     description=' Подписка открывает доступ к расширенному поиску облигаций на 30 дней от даты оплаты.',
+                     description=' Подписка открывает доступ к расширенному поиску облигаций на 30 дней с даты оплаты.',
+                     provider_token=provider_token,
+                     currency='RUB',
+                     photo_url='',
+                     photo_height=None,  # !=0/None or picture won't be shown
+                     photo_width=None,
+                     photo_size=None,
+                     is_flexible=False,  # True If you need to set up Shipping Fee
+                     prices=prices,
+                     start_parameter='subs',
+                     invoice_payload='Subscribe 30')
+
+
+@bot.callback_query_handler(func=lambda query: query.data == 'buy')
+def callback_inline(call):
+    bot.clear_step_handler(call.message)
+
+    bot.send_invoice(call.message.chat.id, title='Подписка (30 дней)',
+                     description=' Подписка открывает доступ к расширенному поиску облигаций на 30 дней с даты оплаты.',
                      provider_token=provider_token,
                      currency='RUB',
                      photo_url='',
@@ -320,33 +340,36 @@ def start_request(message, paid=False):
 
     buttons = {'start': u'\U00002B05' + ' На главную'}
     InlineKeyboard.callback_keyboard(message, buttons, '<b>Результаты поиска</b> \n' + f'<pre>{table}</pre>')
-
-
 # обработчики платного поиска ---
-
-
-@bot.shipping_query_handler(func=lambda query: True)
-def shipping(shipping_query):
-    print(shipping_query)
-    bot.answer_shipping_query(shipping_query.id, ok=True, shipping_options=shipping_options,
-                              error_message='Oh, seems like our Dog couriers are having a lunch right now. Try again later!')
 
 
 @bot.pre_checkout_query_handler(func=lambda query: True)
 def checkout(pre_checkout_query):
     bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
-                                  error_message="Aliens tried to steal your card's CVV, but we successfully protected your credentials,"
-                                                " try to pay again in a few minutes, we need a small rest.")
+                                  error_message="Произошла ошибка во время оплаты. Попробуйте произвести операцию позже.")
 
 
 @bot.message_handler(content_types=['successful_payment'])
 def got_payment(message):
     bot.send_message(message.chat.id,
-                     'Hoooooray! Thanks for payment! We will proceed your order for `{} {}` as fast as possible! '
-                     'Stay in touch.\n\nUse /buy again to get a Time Machine for your friend!'.format(
-                         message.successful_payment.total_amount / 300, message.successful_payment.currency),
+                     'Платеж {} {} потвержден.'.format(
+                         message.successful_payment.total_amount / 100, message.successful_payment.currency),
                      parse_mode='Markdown')
 
+    user = users.User()
+    sub_end_date = datetime.datetime.today().replace(microsecond=0) + datetime.timedelta(days=30)
+    data = {'id': message.from_user.id,
+            'name': message.from_user.first_name,
+            'email': "",
+            'username': message.from_user.username,
+            'access': True,
+            'reg_date': datetime.datetime.today().replace(microsecond=0),
+            'sub_start_date': datetime.datetime.today().replace(microsecond=0),
+            'sub_end_date': sub_end_date}
+    user.add_sub(data)
 
-bot.skip_pending = True
-bot.polling(none_stop=True, interval=0)
+    buttons = {'start': u'\U00002B05' + ' На главную'}
+    InlineKeyboard.callback_keyboard(message, buttons, "Подписка активирована до: " + sub_end_date.strftime("%d.%m.%Y"))
+
+
+bot.polling()

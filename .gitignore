@@ -2,3 +2,5 @@
 .idea
 .handler-saves
 tbot.db
+venv
+/venv/

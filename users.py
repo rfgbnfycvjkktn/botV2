@@ -1,67 +1,79 @@
-import sqlite3
+from pymongo import MongoClient
 import datetime
 
-db_name = r'db/tbot.db'
+import os
+
+MONGODB_URI = os.getenv("MONGODB_URI")
+client = MongoClient(MONGODB_URI)
+
+# Connect to the test db
+db = client.tbot
 
 
 class User:
     def add(self, data):
-        conn = sqlite3.connect(db_name)
-        cur = conn.cursor()
+        user = db.users
+        user_details = {
+            '_id': data['id'],
+            'name': data['name'],
+            'username': data['username'],
+            'email': "",
+            'access': data['access'],
+            'reg_date': data['reg_date'],
+            'sub_start_date': data['sub_start_date'],
+            'sub_end_date': data['sub_end_date']
+        }
 
-        cur.execute("select * from users where userid =" + str(data[0]) + ";")
-        result = cur.fetchone()
+        Queryresult = user.find_one({'_id': data['id']})
 
-        if result is None:
-            cur.execute("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?);", data)
-            conn.commit()
+        if Queryresult is None:
+            result = user.insert_one(user_details)
+            print('Добавлен юзер')
         else:
-            print("Юзер уже есть")
+            print('Юзер уже есть')
 
 
     # проверка есть ли подписка и не кончилась ли она
-    # select * from users where userid=0000 and access=1 AND sub_end_date >= "2021-06-25"
     def paid(self, data):
-        conn = sqlite3.connect(db_name)
-        cur = conn.cursor()
+        user = db.users
+        Queryresult = user.find_one({'_id': data, 'access': True, 'sub_end_date': {'$gte': datetime.datetime.today().replace(microsecond=0)}})
 
-        cur.execute("select * from users where userid=" + str(data) + " AND access=1 AND sub_end_date >=\"" + str(datetime.date.today()) + "\";")
-        result = cur.fetchone()
-
-        if result is None:
-            return False
+        if Queryresult is None:
+             return False
         else:
             return True
 
         return False
 
-
     def check_sub(self, data):
-        conn = sqlite3.connect(db_name)
-        cur = conn.cursor()
+        user = db.users
+        Queryresult = user.find_one({'_id': data, 'access': True})
 
-        cur.execute("select * from users where userid=" + str(data) + " and access=1;")
-        result = cur.fetchone()
-
-        if result is None:
+        if Queryresult is None:
             return {"status_sub": False, "sub_end": ""}
         else:
-            return {"status_sub": True, "sub_end": result[6]}
+            return {"status_sub": True, "sub_end": Queryresult['sub_end_date']}
 
         return {"status_sub": False, "sub_end": ""}
 
-def init_db():
-    conn = sqlite3.connect(db_name)  # создание/инициализация БД
+    def add_sub(self, data):
+        user = db.users
+        user_details = {
+            '_id': data['id'],
+            'name': data['name'],
+            'username': data['username'],
+            'email': "",
+            'access': data['access'],
+            'reg_date': data['reg_date'],
+            'sub_start_date': data['sub_start_date'],
+            'sub_end_date': data['sub_end_date']
+        }
 
-    cur = conn.cursor()
+        Queryresult = user.find_one({'_id': data['id']})
 
-    cur.execute("""CREATE TABLE IF NOT EXISTS users(
-       userid INT PRIMARY KEY,
-       name TEXT,
-       email TEXT,
-       access INT,
-       reg_date TEXT,
-       sub_start_date TEXT,
-       sub_end_date TEXT);
-    """)
-    conn.commit()
+        if Queryresult is None:
+            result = user.insert_one(user_details)
+            print('Добавлен юзер')
+        else:
+            result = user.update_one({'_id': user_details['_id']}, {'$set': {'sub_start_date': user_details['sub_start_date'], 'sub_end_date': user_details['sub_end_date'], 'access': user_details['access']}})
+            print('Обновление подписки')
