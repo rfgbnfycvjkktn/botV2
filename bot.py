@@ -149,6 +149,8 @@ def start_command(call):
                      start_parameter='subs',
                      invoice_payload='Subscribe 30')
 
+    buttons = {'start': u'\U00002B05' + ' На главную'}
+    InlineKeyboard.callback_keyboard(call, buttons, messages.help_menu())
 
 @bot.callback_query_handler(func=lambda query: query.data == 'buy')
 def callback_inline(call):
@@ -166,6 +168,9 @@ def callback_inline(call):
                      prices=prices,
                      start_parameter='subs',
                      invoice_payload='Subscribe 30')
+
+    buttons = {'start': u'\U00002B05' + ' На главную'}
+    InlineKeyboard.callback_keyboard(call.message, buttons, messages.help_menu())
 
 
 @bot.callback_query_handler(func=lambda c: True)
