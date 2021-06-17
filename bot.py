@@ -134,7 +134,10 @@ def callback_inline(message):
 
 @bot.message_handler(commands=["buy"])
 def start_command(call):
+
     bot.clear_step_handler(call)
+
+    reply_markup = keyboards.init_nav_button_pay()
 
     bot.send_invoice(call.chat.id, title='Подписка (30 дней)',
                      description=' Подписка открывает доступ к расширенному поиску облигаций на 30 дней с даты оплаты.',
@@ -147,14 +150,15 @@ def start_command(call):
                      is_flexible=False,  # True If you need to set up Shipping Fee
                      prices=prices,
                      start_parameter='subs',
-                     invoice_payload='Subscribe 30')
+                     invoice_payload='Subscribe 30',
+                     reply_markup=reply_markup)
 
-    buttons = {'start': u'\U00002B05' + ' На главную'}
-    InlineKeyboard.callback_keyboard(call, buttons, messages.help_menu())
 
 @bot.callback_query_handler(func=lambda query: query.data == 'buy')
 def callback_inline(call):
     bot.clear_step_handler(call.message)
+
+    reply_markup = keyboards.init_nav_button_pay()
 
     bot.send_invoice(call.message.chat.id, title='Подписка (30 дней)',
                      description=' Подписка открывает доступ к расширенному поиску облигаций на 30 дней с даты оплаты.',
@@ -167,10 +171,8 @@ def callback_inline(call):
                      is_flexible=False,  # True If you need to set up Shipping Fee
                      prices=prices,
                      start_parameter='subs',
-                     invoice_payload='Subscribe 30')
-
-    buttons = {'start': u'\U00002B05' + ' На главную'}
-    InlineKeyboard.callback_keyboard(call.message, buttons, messages.help_menu())
+                     invoice_payload='Subscribe 30',
+                     reply_markup=reply_markup)
 
 
 @bot.callback_query_handler(func=lambda c: True)

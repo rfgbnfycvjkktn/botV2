@@ -84,3 +84,12 @@ def init_nav_button():
     ]
 
     return types.InlineKeyboardMarkup(keyboard)
+
+
+def init_nav_button_pay():
+    keyboard = [
+        [types.InlineKeyboardButton('Оформить подписку', pay=True)],
+        [types.InlineKeyboardButton(u'\U00002B05' + ' На главную', callback_data='start')]
+    ]
+
+    return types.InlineKeyboardMarkup(keyboard)
