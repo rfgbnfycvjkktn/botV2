@@ -110,7 +110,8 @@ def callback_inline(call):
 # поиск по бесплатному тарифу
 @bot.callback_query_handler(func=lambda query: query.data == 'free_search_main_page')
 def callback_inline(call):
-    buttons = {'yield_less_4': '4', 'yield_less_5': '5', 'yield_less_6': '6', 'yield_less_7': '7'}
+    # buttons = {'yield_less_4': '4', 'yield_less_5': '5', 'yield_less_6': '6', 'yield_less_7': '7'}
+    buttons = {'yield_less_5': '5', 'yield_less_6': '6', 'yield_less_7': '7'}
     InlineKeyboard.callback_keyboard_one_row(call.message, buttons, 'Доходность от (%):')
 
 
@@ -183,7 +184,8 @@ def callback_inline(callback):
         param['yieldless'] = float(yieldless)
 
         # кнопки следующего меню
-        buttons = {'yield_more_5': '5', 'yield_more_6': '6', 'yield_more_7': '7', 'yield_more_8': '8'}
+        # buttons = {'yield_more_5': '5', 'yield_more_6': '6', 'yield_more_7': '7', 'yield_more_8': '8'}
+        buttons = {'yield_more_6': '6', 'yield_more_7': '7', 'yield_more_8': '8'}
         InlineKeyboard.callback_keyboard_one_row(callback.message, buttons, 'Доходность до (%):')
 
     elif re.match('yield_more_', callback.data):
