@@ -215,7 +215,7 @@ def callback_inline(callback):
         param['volume'] = 3000
 
         param['durationless'] = 8
-        param['durationmore'] = 36
+        param['durationmore'] = 24
 
         bot.send_chat_action(callback.message.chat.id, 'typing', 10)
 
