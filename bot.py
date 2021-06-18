@@ -212,9 +212,9 @@ def callback_inline(callback):
         param['pricemore'] = float(pricemore)
 
         # все параметры бесплатного тарифа выбраны/установлены. Нужно произвести расчет
-        param['volume'] = 2500
+        param['volume'] = 3000
 
-        param['durationless'] = 4
+        param['durationless'] = 8
         param['durationmore'] = 36
 
         bot.send_chat_action(callback.message.chat.id, 'typing', 10)
