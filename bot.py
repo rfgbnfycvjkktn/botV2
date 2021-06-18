@@ -229,6 +229,7 @@ def callback_inline(callback):
                                                      param['durationless']) + ' до ' + str(
                                                      param['durationmore']) + '\n' + 'Объем торгов от ' + str(
                                                      param['volume']) + '\n\n' + ' Идёт поиск ...')
+        print(param)
         start_request(callback.message, False)
 
 
