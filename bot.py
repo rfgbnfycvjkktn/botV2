@@ -19,7 +19,7 @@ bot = telebot.TeleBot(TOKEN)
 
 # платежи
 provider_token = os.getenv("TELEGRAM_PROVIDER_TOKEN")
-prices = [LabeledPrice(label='Подписка', amount=30000)]
+prices = [LabeledPrice(label='Подписка', amount=15000)]
 
 param = {'yieldless': 0, 'yieldmore': 0, 'priceless': 0, 'pricemore': 0, 'durationless': 0, 'durationmore': 0,
          'volume': 0}  # параметры запроса
